@@ -61,7 +61,10 @@ async function JobInfos() {
                     Select a job description
                 </h1>
                 <Button asChild>
-                    <Link href="/app/job-infos/new">Create job description</Link>
+                    <Link href="/app/job-infos/new">
+                        <PlusIcon />
+                        Create job description
+                    </Link>
                 </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 has-hover:*:not-hover:opacity-70">
