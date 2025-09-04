@@ -1,5 +1,7 @@
 @layer theme, base, vendor, components, utilities;
 
+@plugin "@tailwindcss/typography";
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
