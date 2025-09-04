@@ -9,7 +9,22 @@ import { InterviewTable, JobInfoTable } from "@/drizzle/schema"
 import { insertInterview, updateInterview } from "./db"
 import { interviewIdTag } from "./dbCache"
 import { canCreateInterviews } from "./permissions"
-import { PLAN_LIMIT_MESSAGE } from "@/lib/errorToast"
+import { PLAN_LIMIT_MESSAGE, RATE_LIMIT_MESSAGE } from "@/lib/errorToast"
+import arcjet, { tokenBucket, request } from "@arcjet/next"
+import { env } from "@/data/env/server"
+
+const aj = arcjet({
+    characteristics: ['userId'],
+    key: env.ARCJET_KEY,
+    rules: [
+        tokenBucket({
+            capacity: 12,
+            refillRate: 4,
+            interval: '1d',
+            mode: 'LIVE'
+        })
+    ]
+})
 
 export async function syncInterviewWithChat(
     id: string,
@@ -71,6 +86,18 @@ export async function createInterview({
         return {
             error: true,
             message: PLAN_LIMIT_MESSAGE
+        }
+    }
+
+    const decistion = await aj.protect(await request(), {
+        userId,
+        requested: 1 // Consumes 1 token for createing an interview
+    })
+
+    if (decistion.isDenied()) {
+        return {
+            error: true,
+            message: RATE_LIMIT_MESSAGE
         }
     }
 
