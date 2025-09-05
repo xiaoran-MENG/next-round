@@ -36,8 +36,6 @@ export function StartCall({
     const durationRef = useRef(callDurationTimestamp)
     durationRef.current = callDurationTimestamp
 
-    console.log('current duration', durationRef.current)
-
     const router = useRouter()
 
     useEffect(() => {
@@ -135,8 +133,6 @@ function Messages({
     } = useVoice()
 
     const results = useMemo(() => condense(messages), [messages])
-
-    console.log("messages: ", results)
 
     return <CondensedMessages
         className='max-w-5xl'

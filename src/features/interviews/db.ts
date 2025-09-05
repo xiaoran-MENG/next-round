@@ -17,7 +17,7 @@ export async function insertInterview(interview: typeof InterviewTable.$inferIns
 
 export async function updateInterview(
     id: string,
-    interview: typeof InterviewTable.$inferInsert
+    interview: Partial<typeof InterviewTable.$inferInsert>
 ) {
     const [result] = await db
         .update(InterviewTable)

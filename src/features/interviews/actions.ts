@@ -12,6 +12,7 @@ import { canCreateInterviews } from "./permissions"
 import { PLAN_LIMIT_MESSAGE, RATE_LIMIT_MESSAGE } from "@/lib/errorToast"
 import arcjet, { tokenBucket, request } from "@arcjet/next"
 import { env } from "@/data/env/server"
+import { generateInterviewFeedback } from "@/services/ai/interviews"
 
 const aj = arcjet({
     characteristics: ['userId'],
@@ -28,10 +29,7 @@ const aj = arcjet({
 
 export async function syncInterviewWithChat(
     id: string,
-    {
-        humeChatId,
-        duration
-    }: {
+    data: {
         humeChatId?: string,
         duration?: string
     }
@@ -52,15 +50,9 @@ export async function syncInterviewWithChat(
         }
     }
 
-    await updateInterview(id, {
-        duration: duration ?? "00:00:00",
-        humeChatId,
-        jobInfoId: result.jobInfo.id
-    })
+    await updateInterview(id, data)
 
-    return {
-        error: false
-    }
+    return { error: false }
 }
 
 export async function createInterview({
@@ -141,7 +133,10 @@ async function getInterview(id: string, userId: string) {
             jobInfo: {
                 columns: {
                     id: true,
-                    userId: true
+                    userId: true,
+                    description: true,
+                    title: true,
+                    experienceLevel: true
                 }
             }
         }
@@ -156,3 +151,37 @@ async function getInterview(id: string, userId: string) {
 
     return interview
 } 
+
+export async function generateFeedback(id: string) {
+    const { userId, user } = await getCurrentUser({ allData: true })
+    if (userId == null || user == null) return {
+        error: true,
+        message: "You don't have permission to do this"
+    }
+
+    const interview = await getInterview(id, userId)
+    if (interview == null) return {
+        error: true,
+        message: "Interview is not found"
+    }
+
+    if (interview.humeChatId == null) return {
+        error: true,
+        message: "Interview is not linked to a chat"
+    }
+
+    const feedback = await generateInterviewFeedback({
+        humeChatId: interview.humeChatId,
+        jobInfo: interview.jobInfo,
+        userName: user.name
+    })
+
+    if (feedback == null) return {
+        error: true,
+        message: "Failed to generate feedback"
+    }
+
+    await updateInterview(id, { feedback })
+
+    return { error: false }
+}
