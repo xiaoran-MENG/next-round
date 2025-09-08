@@ -6,13 +6,28 @@ import { eq } from "drizzle-orm";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 export async function getCurrentUser({ allData = false } = {}) {
-    const { userId, redirectToSignIn } = await auth()
-    const result = {
-        userId,
-        redirectToSignIn,
-        user: allData && userId != null ? await getUser(userId) : undefined,
+  const { userId, redirectToSignIn } = await auth()
+
+  if (!userId) {
+    return {
+      userId: null,
+      redirectToSignIn,
+      user: {
+        id: "default-id",
+        email: "guest@example.com",
+        name: "Guest",
+        imageUrl: "/guest.png",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } satisfies typeof UserTable.$inferSelect,
     }
-    return result
+  }
+
+  return {
+    userId,
+    redirectToSignIn,
+    user: allData ? await getUser(userId) : undefined,
+  }
 }
 
 async function getUser(id: string) {
