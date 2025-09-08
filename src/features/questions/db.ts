@@ -5,18 +5,17 @@ import { revalidateQuestionCache } from "./dbCache"
 export async function insertQuestion(
   question: typeof QuestionTable.$inferInsert
 ) {
-  const [newQuestion] = await db
+  const [row] = await db
     .insert(QuestionTable)
     .values(question)
-    .returning({
-      id: QuestionTable.id,
-      jobInfoId: QuestionTable.jobInfoId,
-    })
+    .returning(); // 新 API：不传参数，返回整行
 
-  revalidateQuestionCache({
-    id: newQuestion.id,
-    jobInfoId: newQuestion.jobInfoId,
-  })
+  const result = {
+    id: row.id,
+    jobInfoId: row.jobInfoId,
+  }
 
-  return newQuestion
+  revalidateQuestionCache(result)
+
+  return result
 }
